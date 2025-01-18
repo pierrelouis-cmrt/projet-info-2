@@ -1,8 +1,9 @@
 import os
 import time
 import matplotlib.pyplot as plt
-import imageio
 from matplotlib import animation
+import imageio
+import random
 
 # ---------------------------------------
 # Gif
@@ -36,21 +37,37 @@ def display_gif(ax, filepath):
 # ---------------------------------------
 def lire_fichier_config(fichier):
     """
-    Lit le fichier de configuration et retourne un dictionnaire
-    { '1': [(x,y), largeur, hauteur, couleur], '2': [...], ... }
+    Lit le fichier de configuration, randomise les positions des formes,
+    et retourne un dictionnaire { 'indice': [(x,y), largeur, hauteur, couleur], ... }.
     """
-    dictionnaire_formes = {}
+    shapes = []
+    coordinates = []
+    
+    # Lecture du fichier et stockage des informations
     with open(fichier, 'r') as f:
         for ligne in f:
             elements = ligne.strip().split(';')
             if len(elements) < 5:
                 continue
             indice = elements[0]
-            point_depart = eval(elements[1])  # Convertit le texte '[x,y]' en tuple
+            point_depart = eval(elements[1])  # Conversion de "[x,y]" en tuple
             largeur = int(elements[2])
             hauteur = int(elements[3])
             couleur = elements[4]
-            dictionnaire_formes[indice] = [point_depart, largeur, hauteur, couleur]
+            
+            # Stocker les infos de la forme sans coordonnée, et collecter la coordonnée séparément
+            shapes.append((indice, largeur, hauteur, couleur))
+            coordinates.append(point_depart)
+    
+    # Mélanger aléatoirement les coordonnées
+    random.shuffle(coordinates)
+    
+    # Réattribuer les coordonnées mélangées aux formes
+    dictionnaire_formes = {}
+    for shape, new_coord in zip(shapes, coordinates):
+        indice, largeur, hauteur, couleur = shape
+        dictionnaire_formes[indice] = [new_coord, largeur, hauteur, couleur]
+    
     return dictionnaire_formes
 
 
@@ -199,7 +216,7 @@ def connect_events(game_state):
     """
     Connecte l'événement de clic de souris et met en place un timer
     pour la mise à jour du temps.
-    """
+    """ 
     fig = game_state['fig']
     cid = fig.canvas.mpl_connect('button_press_event', 
                                  lambda event: on_click(event, game_state))
