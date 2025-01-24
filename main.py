@@ -9,7 +9,7 @@ def choisir_et_executer_script():
 
     print("\n\033[90m===== Scripts Disponibles =====\033[0m")
     for i, f in enumerate(fichiers, 1):
-        print(f"\033[94m{i}.\033[0m \033[31;5;150m{f}\033[0m")  # Orange plus foncé pour les noms des scripts
+        print(f"\033[94m{i}.\033[0m \033[31;5;150m{f}\033[0m")
     print("\033[90m===============================\033[0m")
     print("\n\033[90m============ Infos ============\033[0m")
     print("\033[90mLe script 'classique' contient le jeu avec les cartes rectangulaires comme initialement demandé. \nLe script 'formes' contient une version du jeu avec des formes de cartes variées. \033[0m")
