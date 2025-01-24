@@ -1,34 +1,34 @@
 import os
 import time
 import matplotlib.pyplot as plt
-import imageio
 from matplotlib import animation
+import imageio
+import random
+
+plt.close('all')
 
 # ---------------------------------------
 # Gif
 # ---------------------------------------
 
 def display_gif(ax, filepath):
-    # Lire toutes les trames du GIF
     frames = imageio.mimread(filepath)
     if not frames:
         print(f"Impossible de lire le GIF à partir de {filepath}")
         return None
 
-    # Cacher les axes
     ax.axis('off')
+    # Afficher la première image du GIF
+    im = ax.imshow(frames[0], zorder=0)
 
-    # Afficher la première trame
-    im = ax.imshow(frames[0])
-
-    # Fonction de mise à jour pour l'animation
     def update(frame):
         im.set_data(frame)
         return [im]
 
-    # Créer l'animation
-    ani = animation.FuncAnimation(ax.figure, update, frames=frames, interval=80, blit=True)
+    # IMPORTANT : blit=False pour que tout (texte, etc.) soit rafraîchi correctement
+    ani = animation.FuncAnimation(ax.figure, update, frames=frames, interval=80, blit=False)
     return ani
+
 
 
 # ---------------------------------------
@@ -36,21 +36,37 @@ def display_gif(ax, filepath):
 # ---------------------------------------
 def lire_fichier_config(fichier):
     """
-    Lit le fichier de configuration et retourne un dictionnaire
-    { '1': [(x,y), largeur, hauteur, couleur], '2': [...], ... }
+    Lit le fichier de configuration, randomise les positions des formes,
+    et retourne un dictionnaire { 'indice': [(x,y), largeur, hauteur, couleur], ... }.
     """
-    dictionnaire_formes = {}
+    shapes = []
+    coordinates = []
+    
+    # Lecture du fichier et stockage des informations
     with open(fichier, 'r') as f:
         for ligne in f:
             elements = ligne.strip().split(';')
             if len(elements) < 5:
                 continue
             indice = elements[0]
-            point_depart = eval(elements[1])  # Convertit le texte '[x,y]' en tuple
+            point_depart = eval(elements[1])  # Conversion de "[x,y]" en tuple
             largeur = int(elements[2])
             hauteur = int(elements[3])
             couleur = elements[4]
-            dictionnaire_formes[indice] = [point_depart, largeur, hauteur, couleur]
+            
+            # Stocker les infos de la forme sans coordonnée, et collecter la coordonnée séparément
+            shapes.append((indice, largeur, hauteur, couleur))
+            coordinates.append(point_depart)
+    
+    # Mélanger aléatoirement les coordonnées
+    random.shuffle(coordinates)
+    
+    # Réattribuer les coordonnées mélangées aux formes
+    dictionnaire_formes = {}
+    for shape, new_coord in zip(shapes, coordinates):
+        indice, largeur, hauteur, couleur = shape
+        dictionnaire_formes[indice] = [new_coord, largeur, hauteur, couleur]
+    
     return dictionnaire_formes
 
 
@@ -72,21 +88,21 @@ def compute_shape_coords(data):
 def create_shape_files(formes):
     """
     Parcourt le dictionnaire des formes, crée un fichier CSV pour chaque forme
-    dans le dossier 'rectangles' au format spécifié, et remplace la valeur 
+    dans le dossier 'figures' au format spécifié, et remplace la valeur 
     associée à chaque clé par le chemin du fichier créé.
     Affiche le dictionnaire avant et après la création des fichiers.
     """
     #print("Dictionnaire avant création des fichiers :")
     #print(formes)
 
-    dossier = "rectangles"
+    dossier = "figures"
     os.makedirs(dossier, exist_ok=True)
 
     for key in list(formes.keys()):
         data = formes[key]
         coords = compute_shape_coords(data)
         couleur = data[3]
-        filename = os.path.join(dossier, f"figure_{key}.csv")
+        filename = os.path.join(dossier, f"rectangle_{key}.csv")
         with open(filename, 'w') as f:
             f.write(f"{couleur};\n")
             for pt in coords:
@@ -199,7 +215,7 @@ def connect_events(game_state):
     """
     Connecte l'événement de clic de souris et met en place un timer
     pour la mise à jour du temps.
-    """
+    """ 
     fig = game_state['fig']
     cid = fig.canvas.mpl_connect('button_press_event', 
                                  lambda event: on_click(event, game_state))
@@ -326,7 +342,7 @@ def update_score_and_timer(game_state):
 
 
 def end_game(game_state):
-    # Déterminer le gagnant et le perdant
+    # 1) Déterminer winner et loser
     if game_state['player1_score'] >= game_state['player2_score']:
         winner = game_state['namep1']
         loser = game_state['namep2']
@@ -334,28 +350,23 @@ def end_game(game_state):
         winner = game_state['namep2']
         loser = game_state['namep1']
 
-    print(f"Félicitations {winner}, vous avez gagné contre {loser} !")
-
-    # On arrête le timer
+    # 2) Stopper le timer, désactiver les clics
     if game_state['timer']:
         game_state['timer'].stop()
-
-    # Bloquer les clics sur le plateau
     game_state['disable_clicks'] = True
 
-    # Afficher un message final vers le haut du plateau
+    # 3) Message sur l'axe principal
     game_state['ax'].text(
-        0.5, 0.8,  # Positionner le texte plus haut (y=0.8)
+        0.5, 0.8,
         f"FÉLICITATIONS !\nToutes les paires sont trouvées !\n{winner} a gagné contre {loser}",
         transform=game_state['ax'].transAxes,
         ha="center", va="center",
         fontsize=20, color="black", fontweight="bold"
     )
 
-    # Créer de nouveaux axes pour afficher le GIF en bas, avec une taille réduite
-    # Ajuster les coordonnées pour positionner le GIF plus bas et le réduire
+    # 4) Ajouter l'axe du GIF
     gif_ax = game_state['fig'].add_axes([0.25, 0.1, 0.5, 0.5])
-    gif_ax.axis('off')  # Masquer les axes
+    gif_ax.axis('off')
 
     gif_path = "gif/i-win-you-lose.gif"
     if not os.path.exists(gif_path):
@@ -363,9 +374,28 @@ def end_game(game_state):
     else:
         ani = display_gif(gif_ax, gif_path)
         if ani is not None:
-            # Stocker l'animation pour éviter qu'elle soit collectée
             game_state['fig']._gif_animation = ani
 
+    # 5) Ajouter le texte par-dessus le GIF, avec un zorder élevé et coordonnées normalisées
+    #    (0, 0) = coin bas-gauche de l'axe, (1, 1) = coin haut-droit de l'axe
+    gif_ax.text(
+        0.65, 0.8,
+        f"{winner}",
+        transform=gif_ax.transAxes,
+        ha="center", va="center",
+        fontsize=16, color="black",
+        zorder=10
+    )
+    gif_ax.text(
+        0.35, 0.25,
+        f"{loser}",
+        transform=gif_ax.transAxes,
+        ha="center", va="center",
+        fontsize=16, color="black",
+        zorder=10
+    )
+
+    # 6) Forcer la mise à jour
     game_state['fig'].canvas.draw_idle()
 
 
@@ -408,4 +438,5 @@ if __name__ == "__main__":
     connect_events(game_state)
 
     # 7) Afficher la fenêtre Matplotlib (boucle principale)
+    fig.canvas.manager.full_screen_toggle() # Mode plein écran ;)
     plt.show()
