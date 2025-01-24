@@ -59,7 +59,7 @@ def lire_fichier_config(fichier):
             coordinates.append(point_depart)
     
     # Mélanger aléatoirement les coordonnées
-    random.shuffle(coordinates)
+    #random.shuffle(coordinates)
     
     # Réattribuer les coordonnées mélangées aux formes
     dictionnaire_formes = {}
@@ -387,7 +387,7 @@ def end_game(game_state):
         zorder=10
     )
     gif_ax.text(
-        0.35, 0.25,
+        0.35, 0.28,
         f"{loser}",
         transform=gif_ax.transAxes,
         ha="center", va="center",

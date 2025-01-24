@@ -2,6 +2,7 @@ import os
 import time
 import random
 import matplotlib.pyplot as plt
+from matplotlib.patheffects import withStroke
 
 plt.close('all')
 
@@ -276,11 +277,12 @@ def end_game(game_state):
 
     game_state['disable_clicks'] = True
     game_state['ax'].text(
-        0.5, 0.8,
-        f"FÉLICITATIONS !\n{winner} a gagné contre {loser}",
-        transform=game_state['ax'].transAxes, ha="center", va="center",
-        fontsize=16, color="white", fontweight="bold"
-    )
+    0.5, 0.8,
+    f"FÉLICITATIONS !\n{winner} a gagné contre {loser}",
+    transform=game_state['ax'].transAxes, ha="center", va="center",
+    fontsize=16, color="white", fontweight="bold",
+    path_effects=[withStroke(linewidth=3, foreground="black")]
+)
     game_state['fig'].canvas.draw_idle()
 
 
