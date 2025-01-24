@@ -318,6 +318,10 @@ if __name__ == "__main__":
     setup_board(game_state)
     connect_events(game_state)
 
-    # Plein écran + affichage
-    fig.canvas.manager.full_screen_toggle()
+    # Affichage + frenêtre maximisée
+    manager = plt.get_current_fig_manager()
+    try:
+        manager.window.state('zoomed')
+    except AttributeError:
+        manager.window.showMaximized()
     plt.show()

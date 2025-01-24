@@ -437,6 +437,10 @@ if __name__ == "__main__":
     setup_board(game_state)
     connect_events(game_state)
 
-    # 7) Afficher la fenêtre Matplotlib (boucle principale)
-    fig.canvas.manager.full_screen_toggle() # Mode plein écran ;)
+    # 7) Afficher le plot Matplotlib (en maximisant la fenêtre)
+    manager = plt.get_current_fig_manager()
+    try:
+        manager.window.state('zoomed')
+    except AttributeError:
+        manager.window.showMaximized()
     plt.show()
