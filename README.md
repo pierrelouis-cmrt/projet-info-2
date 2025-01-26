@@ -2,6 +2,10 @@
 
 Ce projet est une recréation du jeu du memory en python.
 
+## Compte rendu
+
+Voir fichier PDF [ici](https://github.com/pierrelouis-cmrt/projet-info-2/blob/69de954edf5d0e5ef13fb5cb62076f64d01667f9/Compte%20Rendu%20Projet%202.pdf).
+
 ## Fonctionnalités
 
 - Mode classique : 24 cartes rectangulaires, 12 paires de cartes à retrouver. ⬛
